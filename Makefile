@@ -37,6 +37,7 @@ google-chrome :
 
 # obsidian :
 # spotify :
+# poke discord
 
 config :
 	git clone --recurse-submodules https://github.com/NoseferatuWKF/.dotfiles.git ~/.dotfiles; \
