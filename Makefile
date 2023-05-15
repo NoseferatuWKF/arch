@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 user : 
 	useradd -m -g users -G audio,wheel noseferatu && passwd noseferatu; \
 	EDITOR=nvim visudo; \
@@ -15,7 +17,7 @@ wayland :
 	sudo pacman -S --noconfirm xorg-server wayland xorg-xwayland xorg-xinit xorg-xrandr
 
 utils :
-	sudo pacman -S --noconfirm stow openssh fzf ripgrep cmake inetutils man ansible
+	sudo pacman -S --noconfirm stow openssh fzf ripgrep cmake inetutils man ansible rsync entr flameshot xclip
 
 interfaces :
 	sudo pacman -S --noconfirm alsa-utils pipewire-alsa wireplumber dmenu nitrogen lf dunst; \
@@ -35,17 +37,21 @@ google-chrome :
 	makepkg -si; \
 	rm -rf ~/google-chrome
 
-# obsidian :
-# spotify :
-# poke discord
+apps :
+	sudo pacman -S --noconfirm obsidian discord; \
+
+ansible :
+	read -s -p "password:" pass; \
+	echo $$pass > ~/pass; \
+	ansible-pull -U https://github.com/NoseferatuWKF/ansible.git --become-pass-file ~/pass --vault-pass-file ~/pass -t 'secrets, repo, post'; \
+	rm ~/pass
 
 config :
-	git clone --recurse-submodules https://github.com/NoseferatuWKF/.dotfiles.git ~/.dotfiles; \
 	cd ~/.dotfiles; \
-	stow --adopt -v zsh tmux nvim git dunst; \
+	stow --adopt -v zsh tmux nvim git dunst nitrogen pipewire; \
 	git restore .
 
 arch : init base
 
-chad : wayland interfaces utils tmux google-chrome config
+chad : wayland interfaces utils tmux google-chrome apps ansible config
 
