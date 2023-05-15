@@ -13,8 +13,8 @@ base :
 	sudo pacman -S --noconfirm zsh tmux git; \
 	chsh -s $$(which zsh) $$USER 
 
-wayland :
-	sudo pacman -S --noconfirm xorg-server wayland xorg-xwayland xorg-xinit xorg-xrandr
+display :
+	sudo pacman -S --noconfirm xorg-server wayland xorg-xwayland xorg-xinit xorg-xrandr picom
 
 utils :
 	sudo pacman -S --noconfirm stow openssh fzf ripgrep cmake inetutils man ansible rsync entr flameshot xclip
@@ -47,11 +47,12 @@ ansible :
 	rm ~/pass
 
 config :
+	sudo ln -s /usr/bin/nvim /usr/local/bin/nvim; \
 	cd ~/.dotfiles; \
-	stow --adopt -v zsh tmux nvim git dunst nitrogen pipewire; \
+	stow --adopt -v zsh tmux nvim git dunst nitrogen pipewire picom; \
 	git restore .
 
 arch : init base
 
-chad : wayland interfaces utils tmux google-chrome apps ansible config
+chad : display interfaces utils zsh tmux google-chrome apps ansible config
 
