@@ -5,13 +5,14 @@
 ```
 cfdisk
 
+# some examples
 # /dev/sda1 - root
 # /dev/sda2 - swap
-# /dev/sda3 - boot
+# /dev/sda3 - efi
 
 mkfs.btrfs /dev/sda1 # remember to set zstd compression and noatime in fstab
 mkswap /dev/sda2
-mkfs.ext4 -O ^has_journal /dev/sda3 # similar with ext2 but this one is better, also use bash, zsh doesn't work here
+mkfs.fat -F 32 /dev/sda3
 
 mount /dev/sda1 /mnt
 swapon /dev/sda2
@@ -20,7 +21,7 @@ swapon /dev/sda2
 ## pacstrap
 
 ```
-pacstrap -K base base-devel linux dhcpcd neovim git
+pacstrap -K \mnt base base-devel linux linux-firmware linux-headers wpa_supplicant dhcpcd neovim git
 ```
 
 ## fstab
@@ -40,6 +41,8 @@ ln -sf /usr/share/zoneinfo/<current>/<location> /etc/localtime
 
 hwclock --systohc
 
+nvim /etc/fstab # update realtime to noatime & compress=zstd to save ssd life
+
 nvim /etc/locale.gen # uncomment en_US.UTF-8
 locale-gen
 nvim /etc/locale.conf # LANG=en_US.UTF-8
@@ -52,7 +55,7 @@ mkinitpcio -P
 passwd
 
 pacman -S grub
-grub-install --target=i386-pc --recheck /dev/sda
+grub-install --target=x86_64-efi --recheck /dev/sda
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # once everything is ok
@@ -60,7 +63,6 @@ exit
 umount /dev/sda1
 reboot
 ```
-
 
 ## arch-chad
 
@@ -71,5 +73,6 @@ git clone https://github.com/NoseferatuWKF/arch.git
 make user
 make arch chad
 
+exit
 reboot
 ```
