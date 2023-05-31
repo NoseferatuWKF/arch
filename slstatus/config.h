@@ -67,6 +67,6 @@ static const struct arg args[] = {
 	/* function format          argument */
 	{ disk_free, "   %s |",            "/"},
 	{ run_command, " 󰕾 %s |", "amixer sget Master | tail -1 | awk '{print $5 }' | sed 's@\\(\\[\\|\\]\\)@@g'" },
-	{ ipv4, " %s |",            "ens33"},
+	{ ipv4, " %s |",            "wlp2s0"},
 	{ datetime, " %s",           "%d-%h  %I:%M%p" },
 };

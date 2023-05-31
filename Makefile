@@ -17,10 +17,10 @@ display :
 	sudo pacman -S --noconfirm xorg-server wayland xorg-xwayland xorg-xinit xorg-xrandr picom
 
 utils :
-	sudo pacman -S --noconfirm stow openssh fzf ripgrep cmake inetutils man ansible rsync entr flameshot xclip
+	sudo pacman -S --noconfirm stow openssh fzf ripgrep cmake inetutils man ansible rsync entr xclip magic-wormhole neofetch
 
 interfaces :
-	sudo pacman -S --noconfirm alsa-utils pipewire-alsa wireplumber dmenu nitrogen lf dunst; \
+	sudo pacman -S --noconfirm alsa-utils pipewire-alsa wireplumber dmenu nitrogen lf dunst flameshot htop; \
 	sudo make -C /root/arch/st clean install; \
 	sudo make -C /root/arch/dwm clean install; \
 	sudo make -C /root/arch/slstatus clean install
@@ -36,6 +36,10 @@ google-chrome :
 	cd ~/google-chrome; \
 	makepkg -si; \
 	rm -rf ~/google-chrome
+
+# slack
+
+# spotify
 
 apps :
 	sudo pacman -S --noconfirm obsidian discord; \
