@@ -37,12 +37,34 @@ google-chrome :
 	makepkg -si; \
 	rm -rf ~/google-chrome
 
-# slack
+slack :
+	git clone https://aur.archlinux.org/slack-desktop.git ~/slack; \
+	cd ~/slack; \
+	makepkg -si; \
+	rm -rf ~/slack
 
-# spotify
+# fonts
+
+nerdctl :
+	sudo pacman -S --noconfirm containerd runc; \
+	mkdir -p /home/noseferatu/nerdctl; \
+	mkdir -p /opt/cni/bin; \
+	curl -L https://github.com/containernetworking/plugins/releases/download/v1.2.0/cni-plugins-linux-amd64-v1.2.0.tgz -o /home/noseferatu/nerdctl/cni.tar.gz; \
+	curl -L https://github.com/moby/buildkit/releases/download/v0.11.5/buildkit-v0.11.5.linux-amd64.tar.gz -o /home/noseferatu/nerdctl/buildkit.tar.gz; \
+	curl -L https://github.com/containerd/nerdctl/releases/download/v1.2.1/nerdctl-1.2.1-linux-amd64.tar.gz -o /home/noseferatu/nerdctl/nerdctl.tar.gz; \
+	sudo tar -C /usr/local/bin -xzf /home/noseferatu/nerdctl/nerdctl.tar.gz; \
+	sudo tar -C /opt/cni/bin -xzf /home/noseferatu/nerdctl/cni.tar.gz; \
+	sudo tar -C /usr/local -xzf /home/noseferatu/nerdctl/buildkit.tar.gz; \
+	sudo curl -L https://raw.githubusercontent.com/moby/buildkit/master/examples/systemd/system/buildkit.socket -o /lib/systemd/system/buildkit.socket; \
+	sudo curl -L https://raw.githubusercontent.com/moby/buildkit/master/examples/systemd/system/buildkit.service -o /lib/systemd/system/buildkit.service; \
+	sudo systemctl enable containerd; \
+	sudo systemctl enable buildkit; \
+	sudo systemctl start containerd; \
+	sudo systemctl start buildkit; \
+	rm -rf /home/noseferatu/nerdctl
 
 apps :
-	sudo pacman -S --noconfirm obsidian discord; \
+	sudo pacman -S --noconfirm obsidian discord spotify-launcher
 
 ansible :
 	read -s -p "password:" pass; \
@@ -58,5 +80,5 @@ config :
 
 arch : init base
 
-chad : display interfaces utils zsh tmux google-chrome apps ansible config
+chad : display interfaces utils zsh tmux google-chrome nerdctl apps ansible config
 
