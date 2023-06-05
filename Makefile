@@ -75,10 +75,12 @@ ansible :
 config :
 	sudo ln -s /usr/bin/nvim /usr/local/bin/nvim; \
 	cd ~/.dotfiles; \
-	stow --adopt -v zsh tmux nvim git dunst nitrogen pipewire picom; \
+	stow --adopt -v arch zsh tmux nvim git dunst nitrogen pipewire picom; \
 	git restore .
 
 arch : init base
 
 chad : display interfaces utils zsh tmux google-chrome nerdctl apps ansible config
+
+.PHONY: init base display interfaces utils zsh tmux google-chrome nerdctl apps ansible config arch chad
 
