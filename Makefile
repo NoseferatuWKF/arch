@@ -14,13 +14,15 @@ base :
 	chsh -s $$(which zsh) $$USER 
 
 display :
-	sudo pacman -S --noconfirm xorg-server wayland xorg-xwayland xorg-xinit xorg-xrandr picom
+	sudo pacman -S --noconfirm xorg-server wayland xorg-xinit xorg-xrandr picom
 
 utils :
 	sudo pacman -S --noconfirm stow openssh fzf ripgrep cmake inetutils man ansible rsync entr xclip magic-wormhole neofetch
 
+# audio, app-launcher, file-manager, notification, screenshot, DE
+# remember to set default sink
 interfaces :
-	sudo pacman -S --noconfirm alsa-utils pipewire-alsa wireplumber dmenu nitrogen lf dunst flameshot htop; \
+	sudo pacman -S --noconfirm alsa-utils pipewire-alsa pipewire-jack pipewire-pulse wireplumber qjackctl dmenu nitrogen lf dunst flameshot btop; \
 	sudo make -C /root/arch/st clean install; \
 	sudo make -C /root/arch/dwm clean install; \
 	sudo make -C /root/arch/slstatus clean install
@@ -32,18 +34,22 @@ tmux :
 	git clone https://github.com/tmux-plugins/tpm.git ~/.tmux/plugins/tpm
 
 google-chrome :
+	sudo pacman -R google-chrome ttf-liberation; \
 	git clone https://aur.archlinux.org/google-chrome.git ~/google-chrome; \
 	cd ~/google-chrome; \
 	makepkg -si; \
 	rm -rf ~/google-chrome
 
 slack :
+	sudo pacman -R slack-desktop; \
 	git clone https://aur.archlinux.org/slack-desktop.git ~/slack; \
 	cd ~/slack; \
 	makepkg -si; \
 	rm -rf ~/slack
 
-# fonts
+# TODO: hack nerd font
+fonts :
+	sudo pacman -S noto-fonts-cjk noto-fonts-emoji
 
 nerdctl :
 	sudo pacman -S --noconfirm containerd runc; \
@@ -69,18 +75,15 @@ apps :
 ansible :
 	read -s -p "password:" pass; \
 	echo $$pass > ~/pass; \
-	ansible-pull -U https://github.com/NoseferatuWKF/ansible.git --become-pass-file ~/pass --vault-pass-file ~/pass -t 'secrets, repo, post'; \
+	ansible-pull -U https://github.com/NoseferatuWKF/ansible.git --ask-become-pass --vault-pass-file ~/pass -t 'arch, secrets, post' playbooks/arch.yml; \
 	rm ~/pass
 
 config :
-	sudo ln -s /usr/bin/nvim /usr/local/bin/nvim; \
-	cd ~/.dotfiles; \
-	stow --adopt -v arch zsh tmux nvim git dunst nitrogen pipewire picom; \
-	git restore .
+	sudo ln -s /usr/bin/nvim /usr/local/bin/nvim
 
 arch : init base
 
-chad : display interfaces utils zsh tmux google-chrome nerdctl apps ansible config
+chad : display interfaces fonts utils zsh tmux google-chrome nerdctl apps ansible config
 
 .PHONY: init base display interfaces utils zsh tmux google-chrome nerdctl apps ansible config arch chad
 

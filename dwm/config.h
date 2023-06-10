@@ -2,20 +2,31 @@
 
 /* appearance */
 static const unsigned int borderpx  = 1;        /* border pixel of windows */
+static const unsigned int gappx     = 5;        /* gap pixel between windows */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 0;        /* 0 means bottom bar */
-static const char *fonts[]          = { "monospace:size=10" };
-static const char dmenufont[]       = "monospace:size=10";
+static const char *fonts[]          = { "mono:size=10:style=Bold:antialias=true:autohint=true" };
+static const char dmenufont[]       = "mono:size=10:style=Bold:antialias=true:autohint=true";
 static const char col_gray1[]       = "#222222";
 static const char col_gray2[]       = "#444444";
 static const char col_gray3[]       = "#bbbbbb";
 static const char col_gray4[]       = "#eeeeee";
-static const char col_cyan[]        = "#005577";
+static const char col_cyan[]       = "#5fafd7";
+
+static const unsigned int baralpha  = 0xd0;
+static const unsigned int borderalpha  = OPAQUE;
+
 static const char *colors[][3]      = {
 	/*               fg         bg         border   */
-	[SchemeNorm] = { col_gray3, col_gray1, col_gray2 },
-	[SchemeSel]  = { col_gray4, col_cyan,  col_cyan  },
+	[SchemeNorm] = { col_gray3, col_gray1, col_gray3 },
+	[SchemeSel]  = { "#000000", col_cyan, col_cyan },
+};
+
+static const unsigned int alphas[][3]	= {
+	/*               fg         bg         border   */
+	[SchemeNorm] = { OPAQUE, baralpha, borderalpha },
+	[SchemeSel]  = { OPAQUE, baralpha, borderalpha },
 };
 
 /* tagging */
@@ -39,9 +50,9 @@ static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen win
 
 static const Layout layouts[] = {
 	/* symbol     arrange function */
-	{ "[]=",      tile },    /* first entry is default */
-	{ "><>",      NULL },    /* no layout function means floating behavior */
-	{ "[M]",      monocle },
+	{ "",      tile },    /* first entry is default */
+	{ "󱂬",      NULL },    /* no layout function means floating behavior */
+	{ "",      monocle },
 };
 
 /* key definitions */
@@ -59,13 +70,15 @@ static const Layout layouts[] = {
 
 /* commands */
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
-static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", col_gray4, NULL };
+static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", "#000000", NULL };
 static const char *termcmd[]  = { "st", NULL };
-static const char *chromecmd[]  = { "google-chrome-stable", NULL };
-static const char *setelchromecmd[]  = { "google-chrome-stable", "--user-data-dir=/home/noseferatu/.config/google-chrome/setel", NULL };
+static const char *chromecmd[]  = { "vivaldi-stable", NULL };
+static const char *setelchromecmd[]  = { "vivaldi-stable", "--user-data-dir=/home/noseferatu/.config/sidekick/setel", NULL };
 static const char *obsidiancmd[]  = { "obsidian", NULL };
 static const char *slackcmd[] = { "slack", NULL };
 static const char *flameshotcmd[] = { "flameshot", "gui", NULL };
+static const char *alsaincvolcmd[] = { "pactl", "set-sink-volume", "@DEFAULT_SINK@", "+10%", NULL};
+static const char *alsadecvolcmd[] = { "pactl", "set-sink-volume", "@DEFAULT_SINK@", "-10%", NULL};
 
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
@@ -76,6 +89,9 @@ static const Key keys[] = {
 	{ SUPERKEY,						XK_s,	   spawn,          {.v = slackcmd } },
 	{ SUPERKEY|ShiftMask,			XK_c,      spawn,		   {.v = setelchromecmd } },
 	{ MODKEY,                       XK_p,      spawn,		   {.v = flameshotcmd } },
+	// XF86Audio keys
+	{ 0,                            0x1008ff13,spawn,          {.v = alsaincvolcmd } },
+	{ 0,                            0x1008ff11,spawn,          {.v = alsadecvolcmd } },
 	{ MODKEY,                       XK_b,      togglebar,      {0} },
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
