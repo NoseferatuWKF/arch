@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-user : 
+user :
 	useradd -m -g users -G audio,wheel noseferatu && passwd noseferatu; \
 	EDITOR=nvim visudo; \
 	su noseferatu; \
