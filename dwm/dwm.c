@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <X11/cursorfont.h>
@@ -56,6 +57,7 @@
 #define HEIGHT(X)               ((X)->h + 2 * (X)->bw)
 #define TAGMASK                 ((1 << LENGTH(tags)) - 1)
 #define TEXTW(X)                (drw_fontset_getwidth(drw, (X)) + lrpad)
+#define OPAQUE                  0xffU
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
@@ -232,6 +234,7 @@ static Monitor *wintomon(Window w);
 static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
+static void xinitvisual();
 static void zoom(const Arg *arg);
 
 /* variables */
@@ -267,6 +270,11 @@ static Display *dpy;
 static Drw *drw;
 static Monitor *mons, *selmon;
 static Window root, wmcheckwin;
+
+static int useargb = 0;
+static Visual *visual;
+static int depth;
+static Colormap cmap;
 
 /* configuration, allows nested code to access above variables */
 #include "config.h"
@@ -709,9 +717,19 @@ drawbar(Monitor *m)
 
 	/* draw status first so it can be overdrawn by tags later */
 	if (m == selmon) { /* status is only drawn on selected monitor */
+		unsigned int hl_w = 125;
+
 		drw_setscheme(drw, scheme[SchemeNorm]);
-		tw = TEXTW(stext) - lrpad + 2; /* 2px right padding */
-		drw_text(drw, m->ww - tw, 0, tw, bh, 0, stext, 0);
+		tw = TEXTW(stext) - lrpad + 5;
+		drw_text(drw, m->ww - tw - hl_w, 0, tw, bh, 0, stext, 0);
+
+		// because slstatus is making my life difficult
+		// maybe move configuration to config.h
+		char buf[16] = {0};
+		time_t rawtime = time(NULL);
+		strftime(buf, 16, "%d-%h %I:%M%p", localtime(&rawtime));
+		drw_setscheme(drw, scheme[SchemeSel]);
+		drw_text(drw, m->ww - hl_w, 0, hl_w, bh, 5, buf, 0);
 	}
 
 	for (c = m->clients; c; c = c->next) {
@@ -720,6 +738,8 @@ drawbar(Monitor *m)
 			urg |= c->tags;
 	}
 	x = 0;
+
+	// draw tags
 	for (i = 0; i < LENGTH(tags); i++) {
 		w = TEXTW(tags[i]);
 		drw_setscheme(drw, scheme[m->tagset[m->seltags] & 1 << i ? SchemeSel : SchemeNorm]);
@@ -730,20 +750,22 @@ drawbar(Monitor *m)
 				urg & 1 << i);
 		x += w;
 	}
+
+	// draw layout toggle
 	w = TEXTW(m->ltsymbol);
 	drw_setscheme(drw, scheme[SchemeNorm]);
 	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
 
-	if ((w = m->ww - tw - x) > bh) {
-		if (m->sel) {
-			drw_setscheme(drw, scheme[m == selmon ? SchemeSel : SchemeNorm]);
-			if (m->sel->isfloating)
-				drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
-		} else {
-			drw_setscheme(drw, scheme[SchemeNorm]);
-			drw_rect(drw, x, 0, w, bh, 1, 1);
-		}
-	}
+	// if ((w = m->ww - tw - x) > bh) {
+		// if (m->sel) {
+		// 	drw_setscheme(drw, scheme[m == selmon ? SchemeSel : SchemeNorm]);
+		// 	if (m->sel->isfloating)
+		// 		drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
+		// } else {
+			// drw_setscheme(drw, scheme[SchemeGap]);
+			// drw_rect(drw, x, 0, w, bh, 1, 1);
+		// }
+	// }
 	drw_map(drw, m->barwin, 0, 0, m->ww, bh);
 }
 
@@ -1118,8 +1140,8 @@ monocle(Monitor *m)
 	for (c = m->clients; c; c = c->next)
 		if (ISVISIBLE(c))
 			n++;
-	if (n > 0) /* override layout symbol */
-		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d]", n);
+	// if (n > 0) /* override layout symbol */
+		// snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d]", n);
 	for (c = nexttiled(m->clients); c; c = nexttiled(c->next))
 		resize(c, m->wx, m->wy, m->ww - 2 * c->bw, m->wh - 2 * c->bw, 0);
 }
@@ -1557,7 +1579,8 @@ setup(void)
 	sw = DisplayWidth(dpy, screen);
 	sh = DisplayHeight(dpy, screen);
 	root = RootWindow(dpy, screen);
-	drw = drw_create(dpy, screen, root, sw, sh);
+	xinitvisual();
+	drw = drw_create(dpy, screen, root, sw, sh, visual, depth, cmap);
 	if (!drw_fontset_create(drw, fonts, LENGTH(fonts)))
 		die("no fonts could be loaded.");
 	lrpad = drw->fonts->h;
@@ -1585,7 +1608,7 @@ setup(void)
 	/* init appearance */
 	scheme = ecalloc(LENGTH(colors), sizeof(Clr *));
 	for (i = 0; i < LENGTH(colors); i++)
-		scheme[i] = drw_scm_create(drw, colors[i], 3);
+		scheme[i] = drw_scm_create(drw, colors[i], alphas[i], 3);
 	/* init bars */
 	updatebars();
 	updatestatus();
@@ -1686,7 +1709,7 @@ tagmon(const Arg *arg)
 void
 tile(Monitor *m)
 {
-	unsigned int i, n, h, mw, my, ty;
+	unsigned int i, n, h, r, g = 0, mw, my, ty;
 	Client *c;
 
 	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
@@ -1694,20 +1717,22 @@ tile(Monitor *m)
 		return;
 
 	if (n > m->nmaster)
-		mw = m->nmaster ? m->ww * m->mfact : 0;
+		mw = m->nmaster ? (m->ww - (g = gappx)) * m->mfact : 0;
 	else
 		mw = m->ww;
 	for (i = my = ty = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), i++)
 		if (i < m->nmaster) {
-			h = (m->wh - my) / (MIN(n, m->nmaster) - i);
+			r = MIN(n, m->nmaster) - i;
+			h = (m->wh - my - gappx * (r - 1)) / r;
 			resize(c, m->wx, m->wy + my, mw - (2*c->bw), h - (2*c->bw), 0);
 			if (my + HEIGHT(c) < m->wh)
-				my += HEIGHT(c);
+				my += HEIGHT(c) + gappx;
 		} else {
-			h = (m->wh - ty) / (n - i);
-			resize(c, m->wx + mw, m->wy + ty, m->ww - mw - (2*c->bw), h - (2*c->bw), 0);
+			r = n - i;
+			h = (m->wh - ty - gappx * (r - 1 )) / r;
+			resize(c, m->wx + mw + g, m->wy + ty, m->ww - mw - g - (2*c->bw), h - (2*c->bw), 0);
 			if (ty + HEIGHT(c) < m->wh)
-				ty += HEIGHT(c);
+				ty += HEIGHT(c) + gappx;
 		}
 }
 
@@ -1820,16 +1845,18 @@ updatebars(void)
 	Monitor *m;
 	XSetWindowAttributes wa = {
 		.override_redirect = True,
-		.background_pixmap = ParentRelative,
+		.background_pixel = 0,
+		.border_pixel = 0,
+		.colormap = cmap,
 		.event_mask = ButtonPressMask|ExposureMask
 	};
 	XClassHint ch = {"dwm", "dwm"};
 	for (m = mons; m; m = m->next) {
 		if (m->barwin)
 			continue;
-		m->barwin = XCreateWindow(dpy, root, m->wx, m->by, m->ww, bh, 0, DefaultDepth(dpy, screen),
-				CopyFromParent, DefaultVisual(dpy, screen),
-				CWOverrideRedirect|CWBackPixmap|CWEventMask, &wa);
+		m->barwin = XCreateWindow(dpy, root, m->wx, m->by, m->ww, bh, 0, depth,
+				InputOutput, visual,
+				CWOverrideRedirect|CWBackPixel|CWBorderPixel|CWColormap|CWEventMask, &wa);
 		XDefineCursor(dpy, m->barwin, cursor[CurNormal]->cursor);
 		XMapRaised(dpy, m->barwin);
 		XSetClassHint(dpy, m->barwin, &ch);
@@ -2125,6 +2152,43 @@ xerrorstart(Display *dpy, XErrorEvent *ee)
 {
 	die("dwm: another window manager is already running");
 	return -1;
+}
+
+void
+xinitvisual()
+{
+    XVisualInfo *infos;
+	XRenderPictFormat *fmt;
+	int nitems;
+	int i;
+
+	XVisualInfo tpl = {
+        .screen = screen,
+		.depth = 32,
+		.class = TrueColor
+	};
+	long masks = VisualScreenMask | VisualDepthMask | VisualClassMask;
+
+	infos = XGetVisualInfo(dpy, masks, &tpl, &nitems);
+	visual = NULL;
+	for(i = 0; i < nitems; i ++) {
+        fmt = XRenderFindVisualFormat(dpy, infos[i].visual);
+		if (fmt->type == PictTypeDirect && fmt->direct.alphaMask) {
+            visual = infos[i].visual;
+			depth = infos[i].depth;
+			cmap = XCreateColormap(dpy, root, visual, AllocNone);
+			useargb = 1;
+			break;
+        }
+    }
+
+	XFree(infos);
+
+	if (! visual) {
+        visual = DefaultVisual(dpy, screen);
+		depth = DefaultDepth(dpy, screen);
+		cmap = DefaultColormap(dpy, screen);
+    }
 }
 
 void
