@@ -14,15 +14,20 @@ base :
 	chsh -s $$(which zsh) $$USER 
 
 display :
-	sudo pacman -S --noconfirm xorg-server wayland xorg-xinit xorg-xrandr picom
+	sudo pacman -S --noconfirm \
+	xorg-server wayland xorg-xinit xorg-xrandr picom
 
 utils :
-	sudo pacman -S --noconfirm stow openssh fzf ripgrep cmake inetutils man ansible rsync entr xclip magic-wormhole neofetch
+	sudo pacman -S --noconfirm \
+	stow openssh fzf ripgrep cmake inetutils man \
+	ansible rsync entr xclip magic-wormhole neofetch
 
 # audio, app-launcher, file-manager, notification, screenshot, DE
 # remember to set default sink
 interfaces :
-	sudo pacman -S --noconfirm alsa-utils pipewire-alsa pipewire-jack pipewire-pulse wireplumber qjackctl dmenu nitrogen lf dunst flameshot btop; \
+	sudo pacman -S --noconfirm \
+	alsa-utils pipewire-alsa pipewire-jack pipewire-pulse wireplumber qjackctl \
+	dmenu nitrogen lf dunst flameshot btop; \
 	sudo make -C /root/arch/st clean install; \
 	sudo make -C /root/arch/dwm clean install; \
 	sudo make -C /root/arch/slstatus clean install
@@ -32,13 +37,6 @@ zsh :
 
 tmux :
 	git clone https://github.com/tmux-plugins/tpm.git ~/.tmux/plugins/tpm
-
-google-chrome :
-	sudo pacman -R google-chrome ttf-liberation; \
-	git clone https://aur.archlinux.org/google-chrome.git ~/google-chrome; \
-	cd ~/google-chrome; \
-	makepkg -si; \
-	rm -rf ~/google-chrome
 
 slack :
 	sudo pacman -R slack-desktop; \
@@ -70,16 +68,13 @@ nerdctl :
 	rm -rf /home/noseferatu/nerdctl
 
 apps :
-	sudo pacman -S --noconfirm obsidian discord spotify-launcher
+	sudo pacman -S --noconfirm obsidian discord spotify-launcher vivaldi
 
 ansible :
 	read -s -p "password:" pass; \
 	echo $$pass > ~/pass; \
 	ansible-pull -U https://github.com/NoseferatuWKF/ansible.git --ask-become-pass --vault-pass-file ~/pass -t 'arch, secrets, post' playbooks/arch.yml; \
 	rm ~/pass
-
-config :
-	sudo ln -s /usr/bin/nvim /usr/local/bin/nvim
 
 arch : init base
 

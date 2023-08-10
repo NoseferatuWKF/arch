@@ -72,8 +72,8 @@ static const Layout layouts[] = {
 static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", "#000000", NULL };
 static const char *termcmd[]  = { "st", NULL };
-static const char *chromecmd[]  = { "vivaldi-stable", NULL };
-static const char *setelchromecmd[]  = { "vivaldi-stable", "--user-data-dir=/home/noseferatu/.config/sidekick/setel", NULL };
+static const char *vivaldicmd[]  = { "vivaldi-stable", NULL };
+static const char *setelvivaldicmd[]  = { "vivaldi-stable", "--user-data-dir=/home/noseferatu/.config/vivaldi/setel", NULL };
 static const char *obsidiancmd[]  = { "obsidian", NULL };
 static const char *slackcmd[] = { "slack", NULL };
 static const char *flameshotcmd[] = { "flameshot", "gui", NULL };
@@ -84,10 +84,10 @@ static const Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ SUPERKEY,				        XK_d,      spawn,          {.v = dmenucmd } },
 	{ SUPERKEY,						XK_t,	   spawn,          {.v = termcmd } },
-	{ SUPERKEY,						XK_c,	   spawn,          {.v = chromecmd } },
+	{ SUPERKEY,						XK_c,	   spawn,          {.v = vivaldicmd } },
 	{ SUPERKEY,						XK_o,	   spawn,          {.v = obsidiancmd } },
 	{ SUPERKEY,						XK_s,	   spawn,          {.v = slackcmd } },
-	{ SUPERKEY|ShiftMask,			XK_c,      spawn,		   {.v = setelchromecmd } },
+	{ SUPERKEY|ShiftMask,			XK_c,      spawn,		   {.v = setelvivaldicmd } },
 	{ MODKEY,                       XK_p,      spawn,		   {.v = flameshotcmd } },
 	// XF86Audio keys
 	{ 0,                            0x1008ff13,spawn,          {.v = alsaincvolcmd } },
