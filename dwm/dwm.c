@@ -67,7 +67,7 @@ enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMWindowTypeDialog, NetClientList, NetLast }; /* EWMH atoms */
 enum { WMProtocols, WMDelete, WMState, WMTakeFocus, WMLast }; /* default atoms */
 enum { ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle,
-       ClkClientWin, ClkRootWin, ClkLast }; /* clicks */
+       ClkClientWin, ClkRootWin, ClkLast, ClkSuspend }; /* clicks */
 
 typedef union {
 	int i;
@@ -132,6 +132,9 @@ struct Monitor {
 	Monitor *next;
 	Window barwin;
 	const Layout *lt[2];
+	// custom mods
+	const char *sleep_symbol;
+	const char *time_format;
 };
 
 typedef struct {
@@ -236,6 +239,7 @@ static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void xinitvisual();
 static void zoom(const Arg *arg);
+static void setsuspend();
 
 /* variables */
 static const char broken[] = "broken";
@@ -447,8 +451,14 @@ buttonpress(XEvent *e)
 		if (i < LENGTH(tags)) {
 			click = ClkTagBar;
 			arg.ui = 1 << i;
-		} else if (ev->x < x + TEXTW(selmon->ltsymbol))
+		// layout button
+		} else if (ev->x < (selmon->ww / 2) + (int)(TEXTW(stext) / 2) + TEXTW(selmon->ltsymbol) &&
+			ev->x > (selmon->ww / 2) + (int)(TEXTW(stext) / 2))
 			click = ClkLtSymbol;
+		// suspend button
+		else if (ev->x < (selmon->ww / 2) - (int)(TEXTW(stext) / 2) &&
+			ev->x > (selmon->ww / 2) - (int)(TEXTW(stext) / 2) - TEXTW(selmon->sleep_symbol))
+			click = ClkSuspend;
 		else if (ev->x > selmon->ww - (int)TEXTW(stext))
 			click = ClkStatusText;
 		else
@@ -652,6 +662,9 @@ createmon(void)
 	m->lt[0] = &layouts[0];
 	m->lt[1] = &layouts[1 % LENGTH(layouts)];
 	strncpy(m->ltsymbol, layouts[0].symbol, sizeof m->ltsymbol);
+	// custom mods
+	m->sleep_symbol = sleep_symbol;
+	m->time_format = time_format;
 	return m;
 }
 
@@ -706,7 +719,7 @@ dirtomon(int dir)
 void
 drawbar(Monitor *m)
 {
-	int x, w, tw = 0;
+	int x = 0, w, tw = 0;
 	int boxs = drw->fonts->h / 9;
 	int boxw = drw->fonts->h / 6 + 2;
 	unsigned int i, occ = 0, urg = 0;
@@ -717,19 +730,18 @@ drawbar(Monitor *m)
 
 	/* draw status first so it can be overdrawn by tags later */
 	if (m == selmon) { /* status is only drawn on selected monitor */
-		unsigned int hl_w = 125;
-
 		drw_setscheme(drw, scheme[SchemeNorm]);
 		tw = TEXTW(stext) - lrpad + 5;
-		drw_text(drw, m->ww - tw - hl_w, 0, tw, bh, 0, stext, 0);
+		x = drw_text(drw, (m->ww / 2) - (tw / 2), 0, tw, bh, 0, stext, 0);
 
-		// because slstatus is making my life difficult
-		// maybe move configuration to config.h
-		char buf[16] = {0};
-		time_t rawtime = time(NULL);
-		strftime(buf, 16, "%d-%h %I:%M%p", localtime(&rawtime));
+		// draw suspend
+		w = TEXTW(m->sleep_symbol);
 		drw_setscheme(drw, scheme[SchemeSel]);
-		drw_text(drw, m->ww - hl_w, 0, hl_w, bh, 5, buf, 0);
+		drw_text(drw, x - tw - w, 0, w, bh, lrpad / 2, m->sleep_symbol, 0);
+
+		// draw layout toggle
+		w = TEXTW(m->ltsymbol);
+		x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
 	}
 
 	for (c = m->clients; c; c = c->next) {
@@ -737,6 +749,8 @@ drawbar(Monitor *m)
 		if (c->isurgent)
 			urg |= c->tags;
 	}
+
+	// reset x coordinate;
 	x = 0;
 
 	// draw tags
@@ -751,21 +765,14 @@ drawbar(Monitor *m)
 		x += w;
 	}
 
-	// draw layout toggle
-	w = TEXTW(m->ltsymbol);
-	drw_setscheme(drw, scheme[SchemeNorm]);
-	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
+	// draw time
+	char buf[32];
+	time_t rawtime = time(NULL);
+	strftime(buf, 32, m->time_format, localtime(&rawtime));
+	w = TEXTW(buf);
+	drw_setscheme(drw, scheme[SchemeSel]);
+	drw_text(drw, m->ww - w, 0, w, bh, lrpad / 2, buf, 0);
 
-	// if ((w = m->ww - tw - x) > bh) {
-		// if (m->sel) {
-		// 	drw_setscheme(drw, scheme[m == selmon ? SchemeSel : SchemeNorm]);
-		// 	if (m->sel->isfloating)
-		// 		drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
-		// } else {
-			// drw_setscheme(drw, scheme[SchemeGap]);
-			// drw_rect(drw, x, 0, w, bh, 1, 1);
-		// }
-	// }
 	drw_map(drw, m->barwin, 0, 0, m->ww, bh);
 }
 
@@ -1540,6 +1547,13 @@ setlayout(const Arg *arg)
 		arrange(selmon);
 	else
 		drawbar(selmon);
+}
+
+void
+setsuspend()
+{
+	// TODO: error handling
+	system("systemctl suspend");
 }
 
 /* arg > 1.0 will set mfact absolutely */

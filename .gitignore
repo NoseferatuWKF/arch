@@ -1,1 +1,4 @@
 *.o
+dwm/dwm
+slstatus/slstatus
+st/st

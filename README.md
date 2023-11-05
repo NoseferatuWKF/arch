@@ -16,12 +16,14 @@ mkfs.fat -F 32 /dev/sda3
 
 mount /dev/sda1 /mnt
 swapon /dev/sda2
+mount --mkdir /dev/sda3 /mnt/boot/efi # root must be mounted first
 ```
 
 ## pacstrap
 
 ```
-pacstrap -K \mnt base base-devel linux linux-firmware linux-headers wpa_supplicant dhcpcd neovim git
+# may need to install efibootmgr
+pacstrap -K /mnt base base-devel linux linux-firmware linux-headers wpa_supplicant dhcpcd neovim git
 ```
 
 ## fstab
@@ -50,7 +52,7 @@ nvim /etc/vconsole.conf # KEYMAP=us
 
 nvim /etc/hostname # arch-chad
 
-mkinitpcio -P
+mkinitcpio -P
 
 passwd
 
@@ -71,6 +73,7 @@ pacman -Syy && pacman -Syu
 
 git clone https://github.com/NoseferatuWKF/arch.git
 make user
+# may want to consider enable pacman parallel downloads
 make arch chad
 
 exit
