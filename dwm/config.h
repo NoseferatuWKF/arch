@@ -6,16 +6,19 @@ static const unsigned int gappx     = 5;        /* gap pixel between windows */
 static const unsigned int snap      = 32;       /* snap pixel */
 static const int showbar            = 1;        /* 0 means no bar */
 static const int topbar             = 0;        /* 0 means bottom bar */
-static const char *fonts[]          = { "mono:size=10:style=Bold:antialias=true:autohint=true" };
-static const char dmenufont[]       = "mono:size=10:style=Bold:antialias=true:autohint=true";
+static const char *fonts[]          = { "HackNerdFontMono-Regular:size=10:style=Bold:antialias=true:autohint=true" };
+static const char dmenufont[]       = "HackNerdFontMono-Regular:size=10:style=Bold:antialias=true:autohint=true";
 static const char col_gray1[]       = "#222222";
 static const char col_gray2[]       = "#444444";
 static const char col_gray3[]       = "#bbbbbb";
 static const char col_gray4[]       = "#eeeeee";
-static const char col_cyan[]       = "#5fafd7";
+static const char col_cyan[]		= "#5fafd7";
+
+// custom mods
+static const char *sleep_symbol		= "";
+static const char *time_format		= " %a %d-%h  %I:%M%p";
 
 static const unsigned int baralpha  = 0xd0;
-static const unsigned int borderalpha  = OPAQUE;
 
 static const char *colors[][3]      = {
 	/*               fg         bg         border   */
@@ -25,8 +28,8 @@ static const char *colors[][3]      = {
 
 static const unsigned int alphas[][3]	= {
 	/*               fg         bg         border   */
-	[SchemeNorm] = { OPAQUE, baralpha, borderalpha },
-	[SchemeSel]  = { OPAQUE, baralpha, borderalpha },
+	[SchemeNorm] = { OPAQUE, baralpha, OPAQUE },
+	[SchemeSel]  = { OPAQUE, OPAQUE, OPAQUE },
 };
 
 /* tagging */
@@ -50,7 +53,7 @@ static const int lockfullscreen = 1; /* 1 will force focus on the fullscreen win
 
 static const Layout layouts[] = {
 	/* symbol     arrange function */
-	{ "",      tile },    /* first entry is default */
+	{ "󰃇",      tile },    /* first entry is default */
 	{ "󱂬",      NULL },    /* no layout function means floating behavior */
 	{ "",      monocle },
 };
@@ -73,12 +76,10 @@ static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() 
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", "#000000", NULL };
 static const char *termcmd[]  = { "st", NULL };
 static const char *vivaldicmd[]  = { "vivaldi-stable", NULL };
-static const char *setelvivaldicmd[]  = { "vivaldi-stable", "--user-data-dir=/home/noseferatu/.config/vivaldi/setel", NULL };
 static const char *obsidiancmd[]  = { "obsidian", NULL };
-static const char *slackcmd[] = { "slack", NULL };
 static const char *flameshotcmd[] = { "flameshot", "gui", NULL };
-static const char *alsaincvolcmd[] = { "pactl", "set-sink-volume", "@DEFAULT_SINK@", "+10%", NULL};
-static const char *alsadecvolcmd[] = { "pactl", "set-sink-volume", "@DEFAULT_SINK@", "-10%", NULL};
+static const char *pactlincvolcmd[] = { "pactl", "set-sink-volume", "@DEFAULT_SINK@", "+10%", NULL};
+static const char *pactldecvolcmd[] = { "pactl", "set-sink-volume", "@DEFAULT_SINK@", "-10%", NULL};
 
 static const Key keys[] = {
 	/* modifier                     key        function        argument */
@@ -86,12 +87,10 @@ static const Key keys[] = {
 	{ SUPERKEY,						XK_t,	   spawn,          {.v = termcmd } },
 	{ SUPERKEY,						XK_c,	   spawn,          {.v = vivaldicmd } },
 	{ SUPERKEY,						XK_o,	   spawn,          {.v = obsidiancmd } },
-	{ SUPERKEY,						XK_s,	   spawn,          {.v = slackcmd } },
-	{ SUPERKEY|ShiftMask,			XK_c,      spawn,		   {.v = setelvivaldicmd } },
 	{ MODKEY,                       XK_p,      spawn,		   {.v = flameshotcmd } },
 	// XF86Audio keys
-	{ 0,                            0x1008ff13,spawn,          {.v = alsaincvolcmd } },
-	{ 0,                            0x1008ff11,spawn,          {.v = alsadecvolcmd } },
+	{ 0,                            0x1008ff13,spawn,          {.v = pactlincvolcmd } },
+	{ 0,                            0x1008ff11,spawn,          {.v = pactldecvolcmd } },
 	{ MODKEY,                       XK_b,      togglebar,      {0} },
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
@@ -140,5 +139,5 @@ static const Button buttons[] = {
 	{ ClkTagBar,            0,              Button3,        toggleview,     {0} },
 	{ ClkTagBar,            MODKEY,         Button1,        tag,            {0} },
 	{ ClkTagBar,            MODKEY,         Button3,        toggletag,      {0} },
+	{ ClkSuspend,           0,				Button1,        setsuspend,     {0} },
 };
-

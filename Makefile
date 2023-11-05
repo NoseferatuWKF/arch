@@ -9,30 +9,33 @@ user :
 init :
 	sudo pacman -Syu --noconfirm && sudo pacman -Syy --noconfirm
 
+# install openntpd for time sync
 base :
 	sudo pacman -S --noconfirm zsh tmux git; \
 	chsh -s $$(which zsh) $$USER 
 
+# TODO: wayland
 display :
 	sudo pacman -S --noconfirm \
-	xorg-server wayland xorg-xinit xorg-xrandr picom
+	xorg-server xorg-xinit xorg-xrandr picom
 
 utils :
 	sudo pacman -S --noconfirm \
-	stow openssh fzf ripgrep cmake inetutils man \
-	ansible rsync entr xclip magic-wormhole neofetch
+	stow openssh fzf ripgrep cmake inetutils man tldr \
+	ansible entr tokei xclip magic-wormhole neofetch
 
 # audio, app-launcher, file-manager, notification, screenshot, DE
 # remember to set default sink
 interfaces :
 	sudo pacman -S --noconfirm \
-	alsa-utils pipewire-alsa pipewire-jack pipewire-pulse wireplumber qjackctl \
+	pipewire-alsa pipewire-jack pipewire-pulse wireplumber qjackctl \
 	dmenu nitrogen lf dunst flameshot btop; \
 	sudo make -C /root/arch/st clean install; \
 	sudo make -C /root/arch/dwm clean install; \
 	sudo make -C /root/arch/slstatus clean install
 
 zsh :
+	curl -s https://ohmyposh.dev/install.sh | bash -s; \
 	curl -sfL git.io/antibody | sudo sh -s - -b /usr/local/bin
 
 tmux :
@@ -47,7 +50,7 @@ slack :
 
 # TODO: hack nerd font
 fonts :
-	sudo pacman -S noto-fonts-cjk noto-fonts-emoji
+	sudo pacman -S --noconfirm noto-fonts-cjk noto-fonts-emoji
 
 nerdctl :
 	sudo pacman -S --noconfirm containerd runc; \
@@ -67,6 +70,8 @@ nerdctl :
 	sudo systemctl start buildkit; \
 	rm -rf /home/noseferatu/nerdctl
 
+# use vlc for video player
+# use remmina for remote display
 apps :
 	sudo pacman -S --noconfirm obsidian discord spotify-launcher vivaldi
 
@@ -78,7 +83,7 @@ ansible :
 
 arch : init base
 
-chad : display interfaces fonts utils zsh tmux google-chrome nerdctl apps ansible config
+chad : display interfaces fonts utils zsh tmux nerdctl apps ansible
 
-.PHONY: init base display interfaces utils zsh tmux google-chrome nerdctl apps ansible config arch chad
+.PHONY: init base display interfaces utils zsh tmux nerdctl apps slack ansible config arch chad
 
