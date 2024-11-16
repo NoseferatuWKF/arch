@@ -1,8 +1,6 @@
-# IN CASE I FORGOT
-
 ## partitioning
 
-```
+```bash
 cfdisk
 
 # some examples
@@ -21,20 +19,20 @@ mount --mkdir /dev/sda3 /mnt/boot/efi # root must be mounted first
 
 ## pacstrap
 
-```
+```bash
 # may need to install efibootmgr
 pacstrap -K /mnt base base-devel linux linux-firmware linux-headers wpa_supplicant dhcpcd neovim git
 ```
 
 ## fstab
 
-```
+```bash
 genfstab -U /mnt >> /mnt/etc/fstab
 ```
 
 ## going deep
 
-```
+```bash
 arch-chroot /mnt
 
 systemctl enable dhcpcd@<interface>.service # after ip link
@@ -68,11 +66,9 @@ reboot
 
 ## arch-chad
 
-```
-pacman -Syy && pacman -Syu
-
+```bash
 git clone https://github.com/NoseferatuWKF/arch.git
-make user
+make user-<name>
 # may want to consider enable pacman parallel downloads
 make arch chad
 
