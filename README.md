@@ -1,5 +1,3 @@
-# IN CASE I FORGOT
-
 ## partitioning
 
 ```
@@ -72,7 +70,7 @@ reboot
 pacman -Syy && pacman -Syu
 
 git clone https://github.com/NoseferatuWKF/arch.git
-make user
+make user-<name>
 # may want to consider enable pacman parallel downloads
 make arch chad
 

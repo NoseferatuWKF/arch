@@ -1,18 +1,22 @@
 SHELL := /bin/bash
 
-user :
-	useradd -m -g users -G audio,wheel noseferatu && passwd noseferatu; \
+user-% :
+	useradd -m -g users -G audio,wheel noseferatu && passwd $*; \
 	EDITOR=nvim visudo; \
-	su noseferatu; \
-	rm -rf ~/arch
+	su $*; \
 
 init :
 	sudo pacman -Syu --noconfirm && sudo pacman -Syy --noconfirm
 
-# install openntpd for time sync
 base :
 	sudo pacman -S --noconfirm zsh tmux git; \
 	chsh -s $$(which zsh) $$USER 
+
+ntpd :
+	sudo pacman -S --noconfirm openntpd; \
+	sudo systemctl enable openntpd.service; \
+	sudo systemctl start openntpd.service: \
+	timedatectl set-ntp true
 
 # TODO: wayland
 display :
@@ -23,6 +27,10 @@ utils :
 	sudo pacman -S --noconfirm \
 	stow openssh fzf ripgrep cmake inetutils man tldr \
 	ansible entr tokei xclip magic-wormhole neofetch
+
+cargo :
+	sudo pacman -S --noconfirm cargo; \
+	cargo install --locked yazi-fm git-delta
 
 # audio, app-launcher, file-manager, notification, screenshot, DE
 # remember to set default sink
@@ -40,13 +48,6 @@ zsh :
 
 tmux :
 	git clone https://github.com/tmux-plugins/tpm.git ~/.tmux/plugins/tpm
-
-slack :
-	sudo pacman -R slack-desktop; \
-	git clone https://aur.archlinux.org/slack-desktop.git ~/slack; \
-	cd ~/slack; \
-	makepkg -si; \
-	rm -rf ~/slack
 
 # TODO: hack nerd font
 fonts :
@@ -70,8 +71,8 @@ nerdctl :
 	sudo systemctl start buildkit; \
 	rm -rf /home/noseferatu/nerdctl
 
-# use vlc for video player
-# use remmina for remote display
+# vlc for video player
+# remmina for remote display
 apps :
 	sudo pacman -S --noconfirm obsidian discord spotify-launcher vivaldi
 
@@ -83,7 +84,10 @@ ansible :
 
 arch : init base
 
-chad : display interfaces fonts utils zsh tmux nerdctl apps ansible
+chad : ntpd display utils cargo interfaces fonts zsh tmux nerdctl apps ansible
+	rm -rf ~/arch
 
-.PHONY: init base display interfaces utils zsh tmux nerdctl apps slack ansible config arch chad
+wsl : utils cargo zsh tmux
+
+.PHONY: init base ntpd display utils cargo interfaces zsh tmux fonts nerdctl apps ansible arch chad wsl
 
